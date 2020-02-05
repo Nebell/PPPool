@@ -8,7 +8,7 @@ import re
 import os, sys
 import requests
 
-from parse.proxyModel import Proxy
+from utils.proxyModel import Proxy
 
 def verifyProxy(proxy : Proxy, url : str = "http://www.baidu.com/", timeout = 2):
     try:
@@ -22,8 +22,8 @@ def verifyProxy(proxy : Proxy, url : str = "http://www.baidu.com/", timeout = 2)
         return False
     
 
-def verifyIP(ip : str):
-    if ":" in ip:
+def verifyIP(ip : str, critical=False):
+    if ":" in ip and not critical:
         return True if re.match(R"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$", ip) else False
     else:
         return True if re.match(R"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$", ip) else False

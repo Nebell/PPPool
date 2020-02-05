@@ -9,7 +9,7 @@ from time import sleep
 
 from spider.Crawl import Crawl
 from utils.webRequest import webRequest
-from parse.proxyModel import Proxy
+from utils.proxyModel import Proxy
 from parse.parserBasic import Parser, XpathParser, RegexParser
 from verify.verifyProxy import verifyProxy
 
@@ -29,9 +29,8 @@ class XiciCrawl(Crawl):
 	def _pageParse(self, html):
 		try:
 			xpParser = XpathParser(html, ".//table[@id='ip_list']/tr")
-		except Exception as e:
-			print(e)
-			return
+		except:
+			pass
 		
 		for trElem in xpParser.rawResultls[1:]:
 			try:
@@ -44,6 +43,8 @@ class XiciCrawl(Crawl):
 
 class NimaCrawl(Crawl):
 # 泥马ip代理
+	def __init__(self):
+		super(NimaCrawl, self).__init__(threads=3)
 
 	# e.g. http://www.nimadaili.com/http/2
 	def _genUrl(self, pages=5):
@@ -59,6 +60,31 @@ class NimaCrawl(Crawl):
 
 	def _pageParse(self, html):
 		xpParser = XpathParser(html, ".//tr")
+		for trElem in xpParser.rawResultls:
+			try:
+				proxy = Proxy(trElem[0].text.split(':')[0], 
+					trElem[0].text.split(':')[1], trElem[1].text, trElem[2].text,
+					trElem[3].text)
+				self.proxyLs.append(proxy)
+			except IndexError:
+				pass
+
+
+class XilaCrawl(Crawl):
+
+	def _genUrl(self, pages=5):
+		# 二级目录
+		types = ["gaoni", "http", "https", "putong"]
+		urlBasic = ["http://www.xiladaili.com/" + x + "/" for x in types]
+		taskUrls = list()
+		for i in range(1, pages+1):
+			for url in urlBasic:
+				taskUrls.append(url + str(i) + "/")
+		
+		return taskUrls
+
+	def _pageParse(self, html):
+		xpParser = XpathParser(html, ".//table[@class='fl-table']//tr")
 		for trElem in xpParser.rawResultls:
 			try:
 				proxy = Proxy(trElem[0].text.split(':')[0], 

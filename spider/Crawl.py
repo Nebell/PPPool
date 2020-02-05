@@ -10,15 +10,19 @@ from random import random
 from time import sleep
 
 from utils.webRequest import webRequest
+from utils.logHandler import logHandler
 
 class Crawl(object):
 
-	def __init__(self, threads=5):
-		# self.html = str()
+	def __init__(self, cocurrent=False, threads=3):
+		self.logger = logHandler("Crawl")
 		self.proxyLs = list()
-		# self.htmlQue = Queue() # 若解析线程和获取网页线程分离
-		# self.threadTimeout = 5
-		# 默认5个线程
+		self.thrdRetryTimes = 2
+		# 是否启动多线程
+		self.cocurrent = cocurrent
+		self.downloadSema = threading.BoundedSemaphore(threads)
+
+	def setThreads(self, threads : int):
 		self.downloadSema = threading.BoundedSemaphore(threads)
 
 	def _genUrl(self):
@@ -32,10 +36,14 @@ class Crawl(object):
 	def _getWeb(self, url):
 	# 获取要代理网页的源代码
 		webReq = webRequest()
-		# 加锁，如果get出错会导致下面锁一直解不开
-		self.downloadSema.acquire()
-		html = webReq.get(url=url)
-		self.downloadSema.release()
+		
+		if self.cocurrent:
+			# 加锁，如果get出错会导致下面锁一直解不开
+			self.downloadSema.acquire()
+			html = webReq.get(url=url)
+			self.downloadSema.release()
+		else:
+			html = webReq.get(url=url)
 		return html
 		# if html:	# 若解析/获取线程量相等，则有部分解析线程无法获取数据
 		# 	self.htmlQue.put(html)
@@ -43,20 +51,29 @@ class Crawl(object):
 	def task(self, url):
 	# 每个要做的任务
 		# 太快会导致有些网页获取不了 随机延时零点几秒
-		sleep(random())
-		html = self._getWeb(url)
-		if html:
-			self._pageParse(html)
+		# sleep(random())
+		try:
+			html = self._getWeb(url)
+			if html:
+				self._pageParse(html)
+			else:
+				self.logger.warning("Failed to get %s" % url)
+		except Exception as e:
+			self.logger.warning("{url} {exception}".format(url=url, exception=str(e)))
 
 	def run(self):
 	# 开启爬取线程
 		taskls = list()
-		for url in self._genUrl():
-			taskls.append(Thread(target=self.task, args=(url,)))
-		for task in taskls:
-			task.start()
-		for task in taskls:
-			task.join()
+		if self.cocurrent:
+			for url in self._genUrl():
+				taskls.append(Thread(target=self.task, args=(url,)))
+			for task in taskls:
+				task.start()
+			for task in taskls:
+				task.join()
+		else:
+			for url in self._genUrl():
+				self.task(url)
 
 """
 	def run(self):

@@ -7,10 +7,12 @@ parserBasic.py
 import re
 from lxml import etree
 from utils.utilsBasic import lazyProperty
+from utils.logHandler import logHandler
 
 class Parser(object):
 	def __init__(self, html):
 		self.html = html
+		self.logger = logHandler("Parse")
 
 	def parse(self):
 		pass
@@ -28,10 +30,11 @@ class XpathParser(Parser):
 
 	@lazyProperty
 	def rawResultls(self):
+	# 获取按Xpath法则匹配的原始列表
 		try:
 			rawls = etree.HTML(self.html).xpath(self.xpath)
 		except Exception as e:
-			print(e, self.xpath)
+			self.logger.error(e, self.xpath)
 			return list()
 		return rawls
 
@@ -45,7 +48,7 @@ class XpathParser(Parser):
 				self.textResultls.append(i.text)
 			return self.textResultls
 		except Exception as e:
-			print(e)
+			self.logger.error(e)
 			return list()
 
 class RegexParser(Parser):

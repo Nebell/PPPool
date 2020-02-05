@@ -8,7 +8,7 @@ parserSpc.py
 """
 
 from parse.parserBasic import Parser, XpathParser, RegexParser
-from parse.proxyModel import Proxy
+from utils.proxyModel import Proxy
 
 class XiciParser(XpathParser):
     def __init__(self, html):

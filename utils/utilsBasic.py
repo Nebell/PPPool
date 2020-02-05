@@ -5,6 +5,7 @@ utilsBasic.py
 """
 
 import random
+from copy import deepcopy
 from utils.utilsVar import UserAgent, Headers
 
 def lazyProperty(func):
@@ -22,6 +23,7 @@ def getUserAgent():
 	return random.choice(UserAgent)
 
 def getHeader():
-	header = Headers
+	# 若无deepcopy会污染utilsVar.py中的变量(Python默认传递引用)
+	header = deepcopy(Headers)
 	header.update({"User-Agent":random.choice(UserAgent)})
 	return header
