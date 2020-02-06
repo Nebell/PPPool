@@ -43,7 +43,7 @@ class RedisDB(DB):
 
     def getAll(self):
         itemDict = self.__db.hgetall(self.__name)
-        return [Proxy.genFromJson(value) for key, value in itemDict]
+        return [Proxy.genFromJson(itemDict[key]) for key in itemDict]
 
     def clear(self):
         self.__db.delete(self.__name)

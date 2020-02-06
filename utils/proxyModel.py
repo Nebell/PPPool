@@ -102,8 +102,11 @@ class Proxy(object):
         try:
             proxyDict = json.loads(jsonObj)
             proxy = Proxy.genFromStr(" ".join([proxyDict["host"], proxyDict["port"], proxyDict["protocol"]]))
-            proxy.info = (" ".join([proxyDict["level"], proxyDict["region"], proxyDict["status"],
-                proxyDict["last_verified_time"], str(proxyDict["fail_count"])]))
+            proxy.info = (" ".join([proxyDict.get("level"), 
+                        proxyDict.get("region", "None"), 
+                        proxyDict.get("status", "untested"),
+                        proxyDict.get("last_verified_time", "/"), 
+                        str(proxyDict.get("fail_count", 0))]))
             return proxy
         except Exception:
             return None

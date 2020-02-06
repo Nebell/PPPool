@@ -11,16 +11,24 @@ from time import sleep
 
 from utils.webRequest import webRequest
 from utils.logHandler import logHandler
+from db.dbClient import DB
 
 class Crawl(object):
 
-	def __init__(self, cocurrent=False, threads=3):
+	def __init__(self, name="", cocurrent=False, threads=3, db:DB=None, retryTimes=2, pages=3):
+		self.name = "Crawl Model" if not name else name
 		self.logger = logHandler("Crawl")
+		self.db = db
 		self.proxyLs = list()
-		self.thrdRetryTimes = 2
+		self.reqRetryTimes = retryTimes
 		# 是否启动多线程
 		self.cocurrent = cocurrent
+		# 每个副栏爬取多少页
+		self.pages = pages
 		self.downloadSema = threading.BoundedSemaphore(threads)
+
+		if not db:
+			self.logger.warning("{name} is running without db!".format(name=self.name))
 
 	def setThreads(self, threads : int):
 		self.downloadSema = threading.BoundedSemaphore(threads)
@@ -33,17 +41,17 @@ class Crawl(object):
 	# 网页解析
 		pass
 
-	def _getWeb(self, url):
+	def _getWeb(self, url, **kwargs):
 	# 获取要代理网页的源代码
 		webReq = webRequest()
 		
 		if self.cocurrent:
 			# 加锁，如果get出错会导致下面锁一直解不开
 			self.downloadSema.acquire()
-			html = webReq.get(url=url)
+			html = webReq.get(url=url, **kwargs)
 			self.downloadSema.release()
 		else:
-			html = webReq.get(url=url)
+			html = webReq.get(url=url, **kwargs)
 		return html
 		# if html:	# 若解析/获取线程量相等，则有部分解析线程无法获取数据
 		# 	self.htmlQue.put(html)
