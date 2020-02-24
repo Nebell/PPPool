@@ -8,6 +8,7 @@ from queue import Queue
 from threading import Thread
 from random import random
 from time import sleep
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
 
 from utils.webRequest import webRequest
 from utils.logHandler import logHandler
@@ -23,15 +24,14 @@ class Crawl(object):
 		self.reqRetryTimes = retryTimes
 		# 是否启动多线程
 		self.cocurrent = cocurrent
+		self._threads = threads
 		# 每个副栏爬取多少页
 		self.pages = pages
-		self.downloadSema = threading.BoundedSemaphore(threads)
-
-		if not db:
-			self.logger.warning("{name} is running without db!".format(name=self.name))
+		# self.downloadSema = threading.BoundedSemaphore(threads)
 
 	def setThreads(self, threads : int):
-		self.downloadSema = threading.BoundedSemaphore(threads)
+		self._threads = threads
+		# self.downloadSema = threading.BoundedSemaphore(threads)
 
 	def _genUrl(self):
 	# 生成要爬的URL
@@ -47,9 +47,9 @@ class Crawl(object):
 		
 		if self.cocurrent:
 			# 加锁，如果get出错会导致下面锁一直解不开
-			self.downloadSema.acquire()
+			# self.downloadSema.acquire()
 			html = webReq.get(url=url, **kwargs)
-			self.downloadSema.release()
+			# self.downloadSema.release()
 		else:
 			html = webReq.get(url=url, **kwargs)
 		return html
@@ -71,14 +71,24 @@ class Crawl(object):
 
 	def run(self):
 	# 开启爬取线程
-		taskls = list()
+		# taskls = list()
+		if not self.db:
+			self.logger.warning("{name} is running without db!".format(name=self.name))
+
 		if self.cocurrent:
-			for url in self._genUrl():
-				taskls.append(Thread(target=self.task, args=(url,)))
-			for task in taskls:
-				task.start()
-			for task in taskls:
-				task.join()
+			# 多线程简陋写法
+			# for url in self._genUrl():
+			# 	taskls.append(Thread(target=self.task, args=(url,)))
+			# for task in taskls:
+			# 	task.start()
+			# for task in taskls:
+			# 	task.join()
+
+			# 调用ThreadPoolExecutor
+			with ThreadPoolExecutor(max_workers=self._threads) as exeSpd:
+				taskFurture = [exeSpd.submit(self.task, (url)) for url in self._genUrl()]
+				wait(taskFurture, return_when=ALL_COMPLETED)
+
 		else:
 			for url in self._genUrl():
 				self.task(url)

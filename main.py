@@ -1,10 +1,19 @@
 import os
-from utils.webRequest import webRequest
-from parse.parserBasic import XpathParser
+from utils.manager import Manager
+from spider.spcCrawl import XiciCrawl, XilaCrawl, NimaCrawl
+from verify.judger import Judger
+from db.spcDB import RedisDB
 
 if "__main__" == __name__:
-    wr = webRequest("https://www.xicidaili.com/nn")
-    html = wr.get()
-    if html:
-        xp = XpathParser(html, ".//tr")
+    # db = RedisDB("test")
+    spiders = [XiciCrawl(), XilaCrawl(), NimaCrawl()]
+    for spi in spiders:
+        spi.cocurrent = True
+    #     if not spi.db:
+    #         spi.db = db
+        # spi.run()
+        # print(spi.proxyLs)
+    # Judger().run()
+    manager = Manager()
+    manager.run()
     

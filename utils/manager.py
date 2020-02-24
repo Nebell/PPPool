@@ -28,7 +28,10 @@ class Manager(object):
 
         # 将没有数据库的爬虫的数据库设置成自己的
         if not spiders:
-            spiders = [XiciCrawl(db=self.__db), XilaCrawl(db=self.__db), NimaCrawl(db=self.__db)]
+            spiders = [
+                XiciCrawl(db=self.__db), 
+                XilaCrawl(db=self.__db), 
+                NimaCrawl(db=self.__db)]
         else:
             for spi in spiders:
                 if not spi.db:
@@ -55,9 +58,11 @@ class Manager(object):
     # 清空池
         self.__db.clear()
 
-    def clearUnavailable(self):
-    # 清理三次检验后仍不能用的
-        pass
+    def clearUnavailable(self, times=5):
+    # 清理五次检验后仍不能用的
+        for proxy in self.__db.getAll():
+            if proxy.fail_count > times:
+                self.__db.delete(proxy.host)
 
     def run(self):
         self.getProxies()
